@@ -52,32 +52,44 @@
             messageBox.scrollTop = messageBox.scrollHeight;
         }
 
-        // Função para simular resposta da IA (substitua por chamada real na produção)
-        function getSimulatedResponse(message) {
-            // Aqui pode-se colocar regras simples para respostas simuladas
-            if(message.toLowerCase().includes('kelly')) return 'O critério de Kelly indica quanto da sua banca apostar em uma aposta com valor. Você precisa informar sua probabilidade real e a odd!';
-            if(message.toLowerCase().includes('ev')) return 'EV (Valor Esperado) = (Probabilidade * Odd) - 1. Aposte apenas com EV positivo!';
-            if(message.toLowerCase().includes('odd')) return 'Odds representam a probabilidade multiplicada pelo retorno. Use odds para calcular o valor esperado!';
-            return 'Sou uma IA simulada neste teste! Pergunte sobre estratégias de aposta, EV+, Kelly, odds, etc.';
+        // Troque pela URL do seu backend IA
+        const BACKEND_URL = "https://SEU_BACKEND_EXEMPLO.com/api/chatbot";
+        
+        // Função para buscar resposta real no backend de IA
+        async function getRealResponse(message) {
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: message })
+                });
+                if(!response.ok) throw new Error("Erro ao consultar IA");
+                const data = await response.json();
+                return data.reply || "A IA não retornou resposta.";
+            } catch (err) {
+                return "Erro ao conectar ao assistente IA. Tente novamente.";
+            }
         }
 
         // Gerenciamento do formulário de chat
         const chatForm = document.getElementById('ai-chat-form');
         if(chatForm) {
-            chatForm.addEventListener('submit', function(e) {
+            chatForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const input = document.getElementById('ai-chat-input');
                 const userMsg = input.value.trim();
                 if(!userMsg) return;
                 addChatMessage('user', userMsg);
                 input.value = '';
-                // IA "pensando"...
-                setTimeout(function() {
-                    const reply = getSimulatedResponse(userMsg);
-                    addChatMessage('bot', reply);
-                }, 700);
+                addChatMessage('bot', 'Digitando...');
+                const reply = await getRealResponse(userMsg);
+                // Remove o "Digitando..."
+                const msgBox = document.getElementById('ai-chat-messages');
+                msgBox.removeChild(msgBox.lastChild);
+                addChatMessage('bot', reply);
             });
         }
+
         // Fecha o chatbot ao pressionar ESC
         window.addEventListener('keydown', function(e){
             if(e.key === 'Escape') {
